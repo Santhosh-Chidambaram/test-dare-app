@@ -1,0 +1,11 @@
+rootProject.name = 'dareu_app'
+include ':react-native-video-editor'
+project(':react-native-video-editor').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-video-editor/android')
+include ':react-native-video-watermarker'
+project(':react-native-video-watermarker').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-video-watermarker/android')
+include ':react-native-video-watermarker'
+project(':react-native-video-watermarker').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-video-watermarker/android')
+include ':react-native-camera'
+project(':react-native-camera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-camera/android')
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
