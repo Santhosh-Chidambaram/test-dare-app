@@ -70,6 +70,7 @@ const Signin = (props) => {
             .catch(error => {
                 console.log(error.code);
             });
+            
         })
         .catch(err => {
             console.log(err);

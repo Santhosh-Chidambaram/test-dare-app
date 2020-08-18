@@ -5,7 +5,7 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  Dimensions,
+  Dimensions, Image
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {Icon} from 'react-native-elements'
@@ -15,10 +15,14 @@ import { API_KEY } from '../../constants';
 import '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import MainContext from '../../MainContext/MainContext';
+import ChallengeHeader from './ChallengeHeader';
+import { setChallenge } from '../../actions/ChallengeActions';
+import { connect } from 'react-redux';
 
 
 
 function ChallengeItem({ item, navigation }) {
+  
   return (
     <View
     style={styles.challengeItem}    
@@ -71,12 +75,12 @@ function ChallengeItem({ item, navigation }) {
   );
 }
 
-const ChallengeHistory = ({ navigation,screenProps }) => {
+const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChallengeData }) => {
     const [vlist,setVlist] = React.useState([])
     const mainContext = useContext(MainContext)
     const {token} = mainContext
     const ref = firestore().collection('dares');
-
+    console.log(filtered.length === 0)
 
     const fetchData = (clist) =>{
       console.log("set")
@@ -89,7 +93,7 @@ const ChallengeHistory = ({ navigation,screenProps }) => {
         })
         .then(res =>  res.json())
         .then(data => {
-            setVlist(data.items)
+            setChallengeData(data.items)
             console.log(data)
         })
       } catch (error) {
@@ -97,7 +101,7 @@ const ChallengeHistory = ({ navigation,screenProps }) => {
       }
         
     }
-
+    
   
     
     useEffect(() => {
@@ -109,19 +113,22 @@ const ChallengeHistory = ({ navigation,screenProps }) => {
         });
         let clist = list.slice(0,-1)+'';
         console.log(clist)
-        //fetchData(clist)
+        fetchData(clist)
         
-      });
+      },[]);
       
       return () => unsubricbeListener()
 
     }, []);
   
   return (
+    <>
+     <ChallengeHeader navigation={navigation} title="Challenge History"/>
     <View style={styles.container}>
+     
       <FlatList
         numColumns={2}
-        data={vlist}
+        data={(filtered.length === 0) ? challenges : filtered}
         renderItem={({ item }) => (
           <ChallengeItem item={item} navigation={navigation} />
         )}
@@ -145,23 +152,36 @@ const ChallengeHistory = ({ navigation,screenProps }) => {
           
         </TouchableOpacity>
       </View>
+ 
+    
     </View>
+    </>
   );
 };
 
+function mapStateToProps(state){
+  return{
+    challenges:state.challengeState.challenges,
+    filtered:state.challengeState.filtered
+  }
+}
 
-export default ChallengeHistory;
+function mapDispatchToProps(dispatch){
+  return{
+      setChallengeData:(data) => dispatch(setChallenge(data)),
+  }
+}
+
+export default connect(mapStateToProps,mapDispatchToProps)(ChallengeHistory);
 
 
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
     flex: 1,
     backgroundColor: "white",
     paddingTop:10,
-    paddingLeft:8,
-    paddingRight:8
+    alignItems:'center'
   },
   challHead: {},
   challText: {
@@ -171,7 +191,7 @@ const styles = StyleSheet.create({
   },
 
   challengeItem: {
-    
+   
     flexDirection: "column",
     margin: 10,
     width: 175,

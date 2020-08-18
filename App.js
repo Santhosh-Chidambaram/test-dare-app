@@ -14,7 +14,7 @@ import {createAppContainer, createSwitchNavigator} from 'react-navigation'
 import Signin from './src/AuthScreen/Signin'
 import DareRules from './src/MainScreen/DareRules';
 
-import DrawerContent from './src/DrawerContent'
+import DrawerContent from './src/Layout/DrawerContent'
 import SplashScreen from './src/SplashScreen';
 import '@react-native-firebase/app';
 import ChallengeHistory from './src/MainScreen/Challenge/ChallengeHistory';
@@ -22,6 +22,7 @@ import UserProfile from './src/MainScreen/Profile/UserProfile';
 import Participation from './src/MainScreen/Participation/Participation';
 import UploadDare from './src/MainScreen/Challenge/UploadDare';
 import CameraScreen from './src/MainScreen/CameraScreen';
+import AdminStackScreen from './routes/AdminStack';
 //Create Stacks for Navigation
 const SideDrawer = createDrawerNavigator()
 const MainStack = createStackNavigator()
@@ -36,7 +37,7 @@ const MainStackScreen = ({navigation}) =>(
   }}
 
   >
-    <MainStack.Screen name="Challenge History" component={ChallengeHistory} /> 
+    <MainStack.Screen name="Challenge History" component={ChallengeHistory} options={{headerShown:false}}/> 
     <MainStack.Screen name="User Profile" component={UserProfile} /> 
     <MainStack.Screen name="Accept Challenge" component={Participation} /> 
     <MainStack.Screen name="Dare Rules" component={DareRules} />
@@ -51,6 +52,7 @@ const SideDrawerSreen = () => (
         
         <SideDrawer.Screen name="Home" component={MainStackScreen}/>
         <SideDrawer.Screen name="Profile" component={UserProfile}/>
+        <SideDrawer.Screen name="Admin Dare" component={AdminStackScreen}/>
 
     </SideDrawer.Navigator>
   </NavigationContainer>

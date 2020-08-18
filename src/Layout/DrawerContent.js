@@ -5,7 +5,7 @@ import {DrawerContentScrollView,DrawerItem} from '@react-navigation/drawer';
 import { Avatar } from 'react-native-paper';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import {Icon} from 'react-native-elements'
-import MainContext from './MainContext/MainContext';
+import MainContext from '../MainContext/MainContext';
 export default function DrawerContent(props){
     const mainContext = useContext(MainContext)
     const {username,email,pic_url} = mainContext;
@@ -42,10 +42,18 @@ export default function DrawerContent(props){
                     
                     <Drawer.Item 
                     active={active == '2'}
-                    icon={() => <Icon type="font-awesome" name="user" size={30} color="#8e2de2" style={{paddingLeft:8,paddingRight:10}}/>}
+                    icon={() => <Icon type="entypo" name="user" size={30} color="#8e2de2" style={{paddingLeft:8,paddingRight:10}}/>}
                     label="Profile"
                     onPress={() => {props.navigation.navigate('User Profile')
                     setActive('2')
+                }}
+                    />
+                     <Drawer.Item 
+                    active={active == '3'}
+                    icon={() => <Icon type="font-awesome-5" name="user-cog" size={30} color="#8e2de2" style={{paddingLeft:5,paddingRight:8}}/>}
+                    label="Admin Dare"
+                    onPress={() => {props.navigation.navigate('Admin Dare')
+                    setActive('3')
                 }}
                     />
                     

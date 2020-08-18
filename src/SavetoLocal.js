@@ -13,8 +13,11 @@ export async function _saveData(key,data) {
 
 export async function _getData(key) {
     try {
-        var value = AsyncStorage.getItem(key)
-        return value
+        var value = AsyncStorage.getItem(key);
+        value = JSON.parse(value);
+        console.log("value returned from storage");
+        return value;
+        
     } catch (error) {
         console.log(error)
     }

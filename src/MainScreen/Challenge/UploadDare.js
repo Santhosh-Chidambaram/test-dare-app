@@ -6,7 +6,8 @@ import {
   Dimensions,
   TouchableOpacity,
   ToastAndroid,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from "react-native";
 import { Input,Icon } from "react-native-elements";
 import '@react-native-firebase/app';
@@ -17,12 +18,27 @@ import {MediaUploader} from '../../../utils/MediaUploader'
 import MainContext from "../../MainContext/MainContext";
 import { ProgressBar, Colors } from 'react-native-paper';
 import RNVideoEditor from 'react-native-video-editor';
-import RNFetchBlob from 'react-native-fetch-blob'
+import { Asset, Constants, FileSystem, Permissions } from 'react-native-unimodules'
+import RNFS from 'react-native-fs'
+import CameraRoll from "@react-native-community/cameraroll";
+import RNFetchBlob from 'rn-fetch-blob'
 
 
+let ress = 'http://10.0.2.2:8081/assets/assets/video/logovid.mp4'
 
 const UploadDare = ({ navigation }) => {
-
+  async function changeToUri(){
+    try {
+      const dest = Asset.fromURI('http://10.0.2.2:8081/assets/assets/video/logovid.mp4?platform=android&hash=7ac6fd7e272a8d5794ffac0e65e28e4c')
+    
+      console.log(dest)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  
+  
+  
   //Context 
 
   const mainContext = useContext(MainContext)
@@ -63,9 +79,10 @@ const UploadDare = ({ navigation }) => {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.video],
       });
-     console.log(res.uri) 
-     console.log((await RNFetchBlob.fs.stat(res.uri)).filename)
-
+    console.log(res.uri) 
+    const path = await RNFetchBlob.fs.stat(res.uri)
+    console.log(path)
+    setSelectedUri(path);
 
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -167,14 +184,16 @@ const UploadDare = ({ navigation }) => {
     console.log(videoArr)
     try {
       RNVideoEditor.merge(
-        [selectedUri,selectedUri],
+        [ress, ress],
         (results) => {
-          console.log('Error: ' + results);
+          alert('Error: ' + results);
         },
         (results, file) => {
-          console.log('Success : ' + results + " file: " + file);
+          alert('Success : ' + results + " file: " + file);
+          CameraRoll.save(file)
         }
       );
+    
     } catch (error) {
         console.log(error)
     }
@@ -258,7 +277,7 @@ const UploadDare = ({ navigation }) => {
           // }else{
           //   showToast("Please Fill All the Fields then press upload")
           // }
-          sampleCheck()
+         
         }}
       >
         <Text style={{ color: "black", fontSize: 20 }}>Upload</Text>
