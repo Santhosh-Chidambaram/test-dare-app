@@ -5,18 +5,6 @@ import LinearGradient from 'react-native-linear-gradient';
 
 const SplashScreen = (props) => {
     const [animating,setAnimating] = useState(true)
-    useEffect(() =>{
-
-        setTimeout(() =>{
-            setAnimating(false)
-                // AsyncStorage.getItem('userDetails').then(value =>{
-                //     props.navigation.navigate(
-                //         value != null ? 'HomeScreen' :'Signin' )
-                // })
-                props.navigation.navigate('Signin' )
-        },3000)
-
-    },[])
     return (
         <View style={styles.container}>
           <StatusBar backgroundColor="#6E45E1" />

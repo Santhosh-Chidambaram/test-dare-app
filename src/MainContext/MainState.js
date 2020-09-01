@@ -11,6 +11,8 @@ const MainState = (props) =>{
         email:'',
         pic_url:'',
         isRegisterd:false,
+        userBlocked:false,
+        user_id:'',
         videoUri:''
 
     }
@@ -28,6 +30,9 @@ const MainState = (props) =>{
         dispatch({type:'SET_VIDEO_URI',payload:uri})
     }
 
+    const setUserBlocked = () =>{
+        dispatch({type:'USER_BLOCKED'})
+    }
 
     return(
         <MainContext.Provider value={{
@@ -36,11 +41,15 @@ const MainState = (props) =>{
             isRegistered:state.isRegistered,
             pic_url:state.pic_url,
             email:state.email,
+            user_id:state.user_id,
             videoUri:state.videoUri,
+            userBlocked:state.userBlocked,
+
 
 
             setUserDetails,
-            setVideoUri
+            setVideoUri,
+            setUserBlocked
 
         }}>
             {props.children}

@@ -2,7 +2,7 @@ import { CLEAR_SEARCH, SEARCH_CHALLENGE, SET_CHALLENGE } from "../actions/types"
 
 const initialState = {
     challenges:[],
-    filtered:[],
+    filtered:'',
 
 }
 const ChallengeReducer = (state=initialState,action) =>{
@@ -26,7 +26,7 @@ const ChallengeReducer = (state=initialState,action) =>{
         case CLEAR_SEARCH:
             return{
                 ...state,
-                filtered:[]
+                filtered:''
             };
         default:
             return state;

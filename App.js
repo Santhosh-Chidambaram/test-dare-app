@@ -1,5 +1,5 @@
 
-import React,{useEffect} from 'react';
+import React,{useEffect,useState,useContext} from 'react';
 import {TouchableOpacity} from 'react-native'
 import { StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage'
@@ -8,7 +8,7 @@ import { Icon } from 'react-native-elements';
 import {NavigationContainer} from '@react-navigation/native'
 import {createStackNavigator} from '@react-navigation/stack'
 import {createDrawerNavigator} from '@react-navigation/drawer'
-import {createAppContainer, createSwitchNavigator} from 'react-navigation'
+
 
 //Screens
 import Signin from './src/AuthScreen/Signin'
@@ -23,10 +23,12 @@ import Participation from './src/MainScreen/Participation/Participation';
 import UploadDare from './src/MainScreen/Challenge/UploadDare';
 import CameraScreen from './src/MainScreen/CameraScreen';
 import AdminStackScreen from './routes/AdminStack';
+import MainContext from './src/MainContext/MainContext';
+import BlockedUser from './src/BlockedUser';
 //Create Stacks for Navigation
 const SideDrawer = createDrawerNavigator()
 const MainStack = createStackNavigator()
-
+const RootApp = createStackNavigator()
 const MainStackScreen = ({navigation}) =>(
   <MainStack.Navigator
   screenOptions={{
@@ -47,7 +49,7 @@ const MainStackScreen = ({navigation}) =>(
 )
 
 const SideDrawerSreen = () => (
-  <NavigationContainer>
+
   <SideDrawer.Navigator drawerContent={props => <DrawerContent {...props} />} drawerPosition="right">
         
         <SideDrawer.Screen name="Home" component={MainStackScreen}/>
@@ -55,30 +57,55 @@ const SideDrawerSreen = () => (
         <SideDrawer.Screen name="Admin Dare" component={AdminStackScreen}/>
 
     </SideDrawer.Navigator>
-  </NavigationContainer>
+
 )
 
-const App = createSwitchNavigator({
-  Splash:{
-    screen:SplashScreen,
-    navigationOptions:{
-      headerShown:false,
-    },
-  },
-  Signin:{
-    screen:Signin,
 
-  },
-  HomeScreen:{
-    screen:SideDrawerSreen,
-    navigationOptions:{
-      headerShown:false
-    }
-  }
-
-})
+const App = () =>{
+  const [showSplash,setShowSplash] = useState(true)
+  const [newUser,setNewUser] = useState(true)
+ 
   
-export default createAppContainer(App)
+  const mainContext = useContext(MainContext)
+  const {userBlocked} = mainContext;
+
+
+  useEffect(() =>{
+     
+      const to = setTimeout(() =>{
+          setShowSplash(false)
+      },3000)
+
+      return() =>{
+        clearTimeout(to)
+      }
+  },[])
+
+
+  return(
+      <NavigationContainer>
+        {
+          showSplash ?
+          <SplashScreen  />
+          :
+          <RootApp.Navigator headerMode="none">
+            <RootApp.Screen name="Sigin" component={Signin}/>
+
+           {
+             userBlocked?
+             <RootApp.Screen name="BlockedScreen" component={BlockedUser} />
+             :
+             <RootApp.Screen name="HomeScreen" component={SideDrawerSreen} />
+           }
+          </RootApp.Navigator>
+        }
+          
+      </NavigationContainer>
+  )
+}
+  
+export default App
+
 
 const styles = StyleSheet.create({
   container: {

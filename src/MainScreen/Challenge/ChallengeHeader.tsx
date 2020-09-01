@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View,TextInput } from 'react-native'
 import { Icon,SearchBar } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient'
 import { connect } from 'react-redux'
@@ -8,56 +8,68 @@ const ChallengeHeader = (props) => {
     const [showSearch,setShowSearch] = useState(false)
     const [search,setSearch] = useState('')
 
-    const changeHandler = (txt) =>{
-        setSearch(txt)
-        setTimeout(() =>{
-                props.setFiltered(search)
-        },5000)
-    }
     return (
         <View style={styles.header}>
             <StatusBar backgroundColor="#66a6ff"/>
           
             {
                 !showSearch?
-                <View style={styles.titleView}>
-                    <Text style={styles.title}>{props.title}</Text>
-                </View>
+                
+                    <View style={styles.titleView}>
+                        <Text style={styles.title}>{props.title}</Text>
+                    </View>
+                
+            
+               
                 :
-                <View style={styles.titleView}>
-                     <SearchBar
-                        lightTheme
+                <View style={styles.searchBar}>
+                   
+                        <TouchableOpacity 
+                        style={{position:'absolute',zIndex:5,top:12,left:15}}
+                        onPress={() =>{setShowSearch(false)}}
+                        >
+                            <Icon name="arrow-back" type="ionicon" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                        style={{position:'absolute',zIndex:5,top:12,right:15}}
+                        onPress={() =>{
+                            setSearch('')
+                            props.clearFiltered()
+                        }}
+                        >
+                            <Icon name="clear" type="material" />
+                        </TouchableOpacity>
+                        <TextInput
                         placeholder="Search Challenge"
-                        onChangeText={txt => changeHandler(txt)}
-                        value={search}
-                        containerStyle={{
-                            backgroundColor:'#66a6ff'
-                        }}
-                        inputContainerStyle={{
+                        style={{
                             backgroundColor:'white',
-                            height:40,
-                            alignItems:'center'
+                            marginHorizontal:8,
+                            marginVertical:5,
+                            paddingLeft:38
                         }}
-                        onCancel={props.clearFiltered}
-                    />    
+                        value={search}
+                        onChangeText={txt => setSearch(txt)}
+                        onSubmitEditing={() =>{props.setFiltered(search)}}
+                        />
+                     
                 </View>
             }
-            <View style={styles.action}>
-                {
-                    showSearch?
-                    <TouchableOpacity onPress={() => setShowSearch(!showSearch)}>
-                    <Icon name="clear" type="material" color="white"/>
-                    </TouchableOpacity>
-                    :
-                    <TouchableOpacity onPress={() => setShowSearch(!showSearch)}>
+            {
+                !showSearch ?
+                <View style={styles.action}>
+              
+                    <TouchableOpacity onPress={() => setShowSearch(true)}>
                     <Icon name="search" type="material" color="white"/>
                     </TouchableOpacity>
-                }
+                
                
-                <TouchableOpacity onPress={() => props.navigation.openDrawer()}>
-                    <Icon name="menu" type="material" color="white"/>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity onPress={() => props.navigation.openDrawer()}>
+                        <Icon name="menu" type="material" color="white"/>
+                    </TouchableOpacity>
+                 </View>
+                 :
+                 null
+            }
             
             
         </View>
@@ -96,8 +108,11 @@ const styles = StyleSheet.create({
     },
     titleView:{
 
-        width:'75%'
+       width:'75%'
 
+    },
+    searchBar:{
+        width:'100%'
     },
     action:{
         width:'25%',

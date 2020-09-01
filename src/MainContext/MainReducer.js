@@ -8,6 +8,7 @@ const MainReducer = (state,action) =>{
                 username:action.payload.username,
                 email:action.payload.email,
                 pic_url:action.payload.pic_url,
+                user_id:action.payload.user_id,
                 isRegisterd:true,
             }
         case 'SET_VIDEO_URI':
@@ -15,7 +16,11 @@ const MainReducer = (state,action) =>{
                 ...state,
                 videoUri:action.payload
             }
-        
+        case 'USER_BLOCKED':
+            return{
+                ...state,
+                userBlocked:true
+            }
         default:
             return state
     }

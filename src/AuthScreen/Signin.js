@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { StyleSheet, Text, View,Image, Dimensions,TouchableOpacity,StatusBar } from 'react-native'
 import {
     GoogleSignin,
@@ -7,18 +7,34 @@ import {
 
 
 import {GoogleSocialButton} from 'react-native-social-buttons'
-import AsyncStorage from '@react-native-community/async-storage'
 import LinearGradient from 'react-native-linear-gradient';
-import {_saveData} from '../SavetoLocal'
+import {_getData, _saveData,_clearData} from '../SavetoLocal'
 import auth from '@react-native-firebase/auth';
 import MainContext from '../MainContext/MainContext';
+import firestore from '@react-native-firebase/firestore';
 
 
 
 const Signin = (props) => {
+
     const mainContext = useContext(MainContext)
-    const {setUserDetails} = mainContext
-    
+    const {setUserDetails,setUserBlocked} = mainContext
+    const userRef = firestore().collection('users');
+
+    const getUserData = async () =>{
+        try {
+            let value = await _getData('userDetails')
+        
+        if(value != null ){
+                autoGoogleSignIn()
+      
+        }
+        } catch (error) {
+            
+        }
+      }
+
+
     React.useEffect(() =>{
         try {
             GoogleSignin.configure({
@@ -29,10 +45,12 @@ const Signin = (props) => {
                     'https://www.googleapis.com/auth/plus.login',
                     ],
                 webClientId: "574168900168-rmib931altviqe7nv9625bm7roagkhk9.apps.googleusercontent.com",
-                forceConsentPrompt: false,
+                forceConsentPrompt: true,
                  // if you want to show the authorization prompt at each login
                  //ZjvNbJapxZyvNMCIVvs9EUIF
             });
+
+            getUserData()
             
         } catch (error) {
             console.log(error)
@@ -42,10 +60,70 @@ const Signin = (props) => {
     },[])
 
     const googleSignInHandler = async() => {
+      
+         GoogleSignin.hasPlayServices()
+         .then(res => {
+             GoogleSignin.signIn()
+             .then(async(res) => {
+                 const sign = await GoogleSignin.getTokens()
+
+
+                  //Create a Google credential with the token
+                 const googleCredential = auth.GoogleAuthProvider.credential(sign['idToken']);
+               
+                  //Sign-in the user with the credential
+                 const result = await auth().signInWithCredential(googleCredential)                
+                 const {user} = result;
+                 let userState = {
+                     username :user.displayName,
+                     email:user.email,
+                     pic_url:user.photoURL,
+                     accessToken:sign['accessToken'],
+                     user_id:user.uid,
+                 } 
+                 setUserDetails(userState)
+                 _saveData('userDetails',JSON.stringify(userState)) 
+                 try {
+                     const isBlocked = (await userRef.doc(user.uid).get()).data().isBlocked;
+                     if(isBlocked){ 
+                         setUserBlocked()
+                         _clearData()
+                         props.navigation.navigate('BlockedScreen')
+                     }else{
+                         props.navigation.navigate('HomeScreen')
+                     }
+                 } catch (error) {
+                     userRef.doc(user.uid).set({
+                         user_id:user.uid,
+                         isBlocked:false,
+                         username :user.displayName,
+                         email:user.email,
+                         pic_url:user.photoURL,
+                     })
+                     console.log("login")
+                     props.navigation.navigate('HomeScreen')
+                 }
+               
+
+                
+                
+             })
+             .catch(error => {
+                 console.log(error.code);
+             });
+            
+         })
+         .catch(err => {
+             console.log(err);
+         });
+    }
+
+    const autoGoogleSignIn = async() => {
         GoogleSignin.hasPlayServices()
-        .then(res => {
+        .then(resp => {
             GoogleSignin.signIn()
             .then(async(res) => {
+              
                 const sign = await GoogleSignin.getTokens()
 
 
@@ -53,29 +131,37 @@ const Signin = (props) => {
                 const googleCredential = auth.GoogleAuthProvider.credential(sign['idToken']);
                
                 // Sign-in the user with the credential
-                const result = await auth().signInWithCredential(googleCredential)                
+                const result = await auth().signInWithCredential(googleCredential)
+
                 const {user} = result;
                 let userState = {
                     username :user.displayName,
                     email:user.email,
                     pic_url:user.photoURL,
-                    accessToken:sign['accessToken']
+                    accessToken:sign['accessToken'],
+                    user_id:user.uid,
                 } 
                 setUserDetails(userState)
-                _saveData('userDetails',JSON.stringify(userState)) 
-               
-                props.navigation.navigate('HomeScreen')
-                
-            })
-            .catch(error => {
-                console.log(error.code);
-            });
+                console.log("autologin")
+
+                const isBlocked = (await userRef.doc(user.uid).get()).data().isBlocked;
+                console.log(isBlocked)
+                if(isBlocked){ 
+                    setUserBlocked()
+                    _clearData()
+                    props.navigation.navigate('BlockedScreen')
+                }else{
+                    props.navigation.navigate('HomeScreen')
+                }
+            
             
         })
         .catch(err => {
             console.log(err);
         });
-    }
+    })
+   
+}
     return (
         <View style={styles.container}>
              <StatusBar backgroundColor="#6E45E1" />

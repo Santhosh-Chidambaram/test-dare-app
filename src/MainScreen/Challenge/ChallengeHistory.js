@@ -76,7 +76,6 @@ function ChallengeItem({ item, navigation }) {
 }
 
 const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChallengeData }) => {
-    const [vlist,setVlist] = React.useState([])
     const mainContext = useContext(MainContext)
     const {token} = mainContext
     const ref = firestore().collection('dares');
@@ -94,7 +93,7 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
         .then(res =>  res.json())
         .then(data => {
             setChallengeData(data.items)
-            console.log(data)
+            console.log(data.items.length)
         })
       } catch (error) {
           console.log(error)
@@ -108,9 +107,13 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
       const unsubricbeListener = ref.onSnapshot(querySnapshot => {
         let list = '';
         querySnapshot.forEach(doc => {
-          const { videoId } = doc.data();
-          list+=(videoId+",")
+          
+          const { videoId,isBlocked } = doc.data();
+              if(isBlocked === false){
+                list+=(videoId+",")
+              }
         });
+
         let clist = list.slice(0,-1)+'';
         console.log(clist)
         fetchData(clist)
@@ -128,7 +131,7 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
      
       <FlatList
         numColumns={2}
-        data={(filtered.length === 0) ? challenges : filtered}
+        data={filtered != '' ? filtered : challenges}
         renderItem={({ item }) => (
           <ChallengeItem item={item} navigation={navigation} />
         )}
@@ -138,7 +141,7 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
       <View style={styles.createView}>
       <TouchableOpacity
          
-         onPress={() => navigation.navigate("Upload Video")}
+         onPress={() => navigation.navigate("Upload Video",{docId:'new'})}
          delayPressIn={1}
        >
             <LinearGradient 
@@ -193,8 +196,9 @@ const styles = StyleSheet.create({
   challengeItem: {
    
     flexDirection: "column",
-    margin: 10,
-    width: 175,
+    marginVertical:5,
+    marginHorizontal: 5,
+    width: Dimensions.get('window').width/2.1,
     height: 180,
     backgroundColor: "#cecece",
     justifyContent: "center",

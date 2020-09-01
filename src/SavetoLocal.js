@@ -14,11 +14,21 @@ export async function _saveData(key,data) {
 export async function _getData(key) {
     try {
         var value = AsyncStorage.getItem(key);
-        value = JSON.parse(value);
+        value = value;
         console.log("value returned from storage");
         return value;
         
     } catch (error) {
+        console.log("storage");
         console.log(error)
+    }
+}
+
+export async function _clearData(){
+    try {
+        const keys = await AsyncStorage.getAllKeys();
+        await AsyncStorage.multiRemove(keys);
+    } catch (error) {
+        console.error('Error clearing app data.');
     }
 }

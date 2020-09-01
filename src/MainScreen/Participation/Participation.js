@@ -4,7 +4,7 @@ import {
   Text,
   View,
   TouchableOpacity,
-  FlatList,
+  FlatList,Dimensions
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {Icon} from 'react-native-elements'
@@ -13,10 +13,12 @@ import '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import { API_KEY } from "../../constants";
 import MainContext from "../../MainContext/MainContext";
+import Leaderboard from './Leaderboard'
 
 
-
-function ParticipationItem({ item }) {
+function ParticipationItem({ item,likeList,likeChallenge,user_id }) {
+  let likeslength = likeList.filter(l => Object.keys(l).includes(item.id))
+ 
   return (
     <View style={styles.participationItem}>
       <LinearGradient 
@@ -45,8 +47,16 @@ function ParticipationItem({ item }) {
             <TouchableOpacity  delayPressIn={1} style={styles.share}>
                 <Icon type="entypo" name="share" size={28} color="black" />
                 </TouchableOpacity>
-                <TouchableOpacity  delayPressIn={1}>
-                <Icon type="antdesign" name="heart" size={28} color="#cecece" />
+                
+                <TouchableOpacity  
+                style={{flexDirection:'row',alignItems:'center'}} 
+                onPress={() => likeChallenge(item.id)}>
+                  <Text style={{fontSize:18,paddingRight:10}}>{likeslength.length > 0 ? likeslength[0][item.id] : '0'}</Text>
+                {
+                  likeslength[0]['likedMembers'].includes(user_id)?
+                  <Icon type="antdesign" name="heart" size={28} color="red" />:
+                  <Icon type="antdesign" name="heart" size={28} color="#cecece" />
+                }
                 </TouchableOpacity>
 
 
@@ -62,29 +72,15 @@ function ParticipationItem({ item }) {
 
 const Participation = ({ navigation,route }) => {
   const {challengeID} = route.params;
-  console.log(challengeID)
-
   const mainContext = useContext(MainContext)
-  const {token} = mainContext
+  const {token,user_id} = mainContext
   const [vlist, setVlist] = useState([]);
+  const [likeList,setLikeList] = useState('')
   const [docId,setDocId] = useState('')
   const ref = firestore().collection('dares')
+  const [participantList,setParticipantList] = useState([])
 
-
-  const getDocumentId = () =>{
-    ref.where("videoId","==",challengeID)
-    .get()
-    .then(querySnapShot =>{
-      querySnapShot.forEach(doc =>{
-        setDocId(doc.id)
-        console.log(doc.id)
-      
-      })
-    })
-  }
- 
-
-
+  
 
 
 
@@ -115,39 +111,101 @@ const Participation = ({ navigation,route }) => {
 
   useEffect(() => {
 
-    getDocumentId()
+    const subscriber = ref.onSnapshot(querySnapShot =>{
+        querySnapShot.forEach(doc =>{
+          const {videoId} = doc.data()
+          if(challengeID === videoId){
+            let list = '';
+            let likes = []
+            setDocId(doc.id)
+            const { participants} = doc.data();
+            if(participants){
+              setParticipantList(participants)
+              participants.forEach(p =>{
+                    list+=(p.videoId+",")
+      
+                     if(p.likes){
+                       likes.push({[p.videoId]:p.likes.length,'likedMembers':p.likes})
+                     }
+      
+                    })
+                    
+              }
 
-    if(docId){
-      ref.doc(docId).collection('participants')
-      .get()
-      .then(querySnapshot => {
-        let list = '';
-        querySnapshot.forEach(doc => {
-          const { videoId } = doc.data();
-          list+=(videoId+",")
-        });
-        let clist = list.slice(0,-1)+'';
-        console.log(clist)
-        fetchData(clist)
-      })
+              let clist = list.slice(0,-1)+'';
+              console.log(clist)
+              setLikeList(likes)
+             if(clist){
+              fetchData(clist)
+             }
 
+          }
+        })
+    })
+    
+   
+
+
+   return() => subscriber()
+    
+   
+  
+  
+  },[]);
+
+  const likeChallenge = async (vidId) =>{
+    try {
+      ref.doc(docId).get()
+    .then(async (querySnap) =>{
+        const { participants } = querySnap.data()
+        if(participants){
+            let temp_participants = participants.map(participant =>{
+              if(participant.likes){
+                 if(participant.videoId === vidId){
+                  if(participant.likes.includes(user_id)){
+                    participant.likes = participant.likes.filter(l => l != user_id)
+                  }else{
+                    participant.likes = [...participant.likes,user_id]
+                 
+                  }
+                  
+                  return participant
+                 }else{
+                   return participant
+                 }
+              }else{
+                participant.likes = [user_id]
+                return participant
+              }
+            })
+            
+           
+            await ref.doc(docId).update({
+            "participants":temp_participants
+            })
+        }
+    })
+    } catch (error) {
+      console.log(error)
     }
-  }, [docId]);
+  }
 
+ 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.challHead}>
-                <Text style={styles.challText}>Participation</Text>
-            </View> */}
-
-    <View style={{height:600}}>
+     <View style={{flex:1}}>
+      <Leaderboard plist={participantList}/>
+      </View> 
+    
+    <View style={{flex:3}}>
      {
        vlist != ''?
        <FlatList
        numColumns={2}
        data={vlist}
-       renderItem={({ item }) => <ParticipationItem item={item} />}
+       renderItem={({ item }) => <ParticipationItem item={item} likeList={likeList} likeChallenge={likeChallenge} user_id={user_id}/>}
        keyExtractor={(item) => item.id}
+      
      />
      :
      <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
@@ -159,7 +217,7 @@ const Participation = ({ navigation,route }) => {
     <View style={styles.createView}>
       <TouchableOpacity
          
-         onPress={() => navigation.navigate("Upload Video")}
+         onPress={() => navigation.navigate("Upload Video",{docId:docId})}
          delayPressIn={1}
        >
             <LinearGradient 
@@ -196,8 +254,9 @@ const styles = StyleSheet.create({
   participationItem: {
   
     flexDirection: "column",
-    margin: 10,
-    width: 175,
+    marginVertical:5,
+    marginHorizontal: 5,
+    width: Dimensions.get('window').width/2.1,
     height: 180,
     backgroundColor: "#cecece",
     justifyContent: "center",
