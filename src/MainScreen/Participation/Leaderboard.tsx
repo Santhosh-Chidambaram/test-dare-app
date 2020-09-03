@@ -23,7 +23,13 @@ function containsObject(obj, list) {
 }
 
 const Leaderboard = (props) => {
-    let participantList =props.plist.likes ? props.plist.sort(compare) : props.plist
+    //console.log("LeaderBoard Props",props.plist)
+
+    let participantList = []
+    if(props.plist){  //Rearranged particpant List
+        participantList =props.plist.sort(compare) 
+    }
+
     const userRef = firestore().collection('users')
     const [userList,setUserList] = useState([])
 
@@ -31,17 +37,19 @@ const Leaderboard = (props) => {
         let users= {}
         await userRef.get()
         .then(snap =>{
-            snap.forEach(user =>[
-                  users[user.data().user_id] = user.data().pic_url
-            ])
+            snap.forEach(user =>{
+                const {user_id,pic_url} = user.data()
+                users[user_id] = pic_url
+            })
+          
         })
-        
+        console.log(users)
         let finalUsers = []
         participantList.map((p,index) =>{
            if(index <10){
            if(p.participant_id){
             if(Object.keys(users).includes(p.participant_id.trim())){
-       
+                
                 let userObj = {
                     user_id:p.participant_id.trim(),
                     pic_url:users[p.participant_id.trim()]
@@ -59,8 +67,10 @@ const Leaderboard = (props) => {
            }
             
         })
-      
+        
+        console.log(finalUsers)
         setUserList(finalUsers)
+        
     }
     useEffect(() =>{
          getUsers()

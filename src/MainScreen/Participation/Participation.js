@@ -4,7 +4,7 @@ import {
   Text,
   View,
   TouchableOpacity,
-  FlatList,Dimensions
+  FlatList,Dimensions,Share
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {Icon} from 'react-native-elements'
@@ -16,8 +16,9 @@ import MainContext from "../../MainContext/MainContext";
 import Leaderboard from './Leaderboard'
 
 
-function ParticipationItem({ item,likeList,likeChallenge,user_id }) {
-  let likeslength = likeList.filter(l => Object.keys(l).includes(item.id))
+function ParticipationItem({ item,likeChallenge,user_id,onShare }) {
+  let likes = item.likes ? item.likes.length : ''
+  let isUserLiked = item.likes ? item.likes.includes(user_id) : false
  
   return (
     <View style={styles.participationItem}>
@@ -38,22 +39,25 @@ function ParticipationItem({ item,likeList,likeChallenge,user_id }) {
          
         }}
         javaScriptEnabled={true}
-        source={{ uri: "https://www.youtube.com/embed/" + item.id}}
+        source={{ uri: "https://www.youtube.com/embed/" + item.videoId}}
       />
       
        
         <View style={{padding:2,flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
       
-            <TouchableOpacity  delayPressIn={1} style={styles.share}>
+        <TouchableOpacity  delayPressIn={1} style={styles.share} onPress={() => {
+              let mes = `New Dare !| Click to Watch https://www.youtube.com/watch?v=${item.videoId}`
+              onShare(mes)
+              }}>
                 <Icon type="entypo" name="share" size={28} color="black" />
                 </TouchableOpacity>
                 
                 <TouchableOpacity  
                 style={{flexDirection:'row',alignItems:'center'}} 
-                onPress={() => likeChallenge(item.id)}>
-                  <Text style={{fontSize:18,paddingRight:10}}>{likeslength.length > 0 ? likeslength[0][item.id] : '0'}</Text>
+                onPress={() => likeChallenge(item.videoId)}>
+                  <Text style={{fontSize:18,paddingRight:10}}>{likes ? likes : '0'}</Text>
                 {
-                  likeslength[0]['likedMembers'].includes(user_id)?
+                  isUserLiked?
                   <Icon type="antdesign" name="heart" size={28} color="red" />:
                   <Icon type="antdesign" name="heart" size={28} color="#cecece" />
                 }
@@ -75,72 +79,50 @@ const Participation = ({ navigation,route }) => {
   const mainContext = useContext(MainContext)
   const {token,user_id} = mainContext
   const [vlist, setVlist] = useState([]);
-  const [likeList,setLikeList] = useState('')
   const [docId,setDocId] = useState('')
   const ref = firestore().collection('dares')
   const [participantList,setParticipantList] = useState([])
 
-  
 
-
-
-  
-
-  const fetchData = (clist) =>{
-
+  const onShare = async (message) => {
     try {
-      fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${clist}&key=${API_KEY}`,{
-        headers:{
-          Authorization: "Bearer "+token,
-          Accept: "application/json"
+      const result = await Share.share({
+        message:
+          message,
+      });
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+        } else {
+          // shared
         }
-      })
-      .then(res => res.json())
-      .then(data => {
-          if(data.items){
-            setVlist(data.items)
-             console.log(data)
-          }
-      })
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+      }
     } catch (error) {
-        console.log(error)
+      alert(error.message);
     }
-      
-  }
-
-
+  };
   useEffect(() => {
 
     const subscriber = ref.onSnapshot(querySnapShot =>{
+        let dlist = [];
         querySnapShot.forEach(doc =>{
-          const {videoId} = doc.data()
+          const {videoId,participants} = doc.data()   //Getting Particpants By the VideoID
+          
           if(challengeID === videoId){
-            let list = '';
-            let likes = []
             setDocId(doc.id)
-            const { participants} = doc.data();
-            if(participants){
+            //console.log("p",participants)
+         
+            if(participants)   //Checking if particiapants exists
+            {
+              dlist= participants;
               setParticipantList(participants)
-              participants.forEach(p =>{
-                    list+=(p.videoId+",")
-      
-                     if(p.likes){
-                       likes.push({[p.videoId]:p.likes.length,'likedMembers':p.likes})
-                     }
-      
-                    })
-                    
-              }
-
-              let clist = list.slice(0,-1)+'';
-              console.log(clist)
-              setLikeList(likes)
-             if(clist){
-              fetchData(clist)
-             }
-
+            }  
           }
         })
+         //console.log(dlist)
+         setVlist(dlist)
     })
     
    
@@ -193,18 +175,23 @@ const Participation = ({ navigation,route }) => {
  
   return (
     <View style={styles.container}>
-     <View style={{flex:1}}>
+     <View style={{flex:1,marginBottom:15}}>
       <Leaderboard plist={participantList}/>
       </View> 
     
     <View style={{flex:3}}>
      {
-       vlist != ''?
+       vlist.length > 0?
        <FlatList
        numColumns={2}
        data={vlist}
-       renderItem={({ item }) => <ParticipationItem item={item} likeList={likeList} likeChallenge={likeChallenge} user_id={user_id}/>}
-       keyExtractor={(item) => item.id}
+       renderItem={({ item }) => 
+       <ParticipationItem item={item}  
+       likeChallenge={likeChallenge} 
+       user_id={user_id}
+       onShare={onShare}
+       />}
+       keyExtractor={(item) => item.videoId}
       
      />
      :

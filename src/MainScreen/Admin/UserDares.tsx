@@ -28,7 +28,7 @@ function ChallengeItem({ item}) {
       >
           <WebView 
           javaScriptEnabled={true}
-          source={{ uri: "https://www.youtube.com/embed/" + item.id }}
+          source={{ uri: "https://www.youtube.com/embed/" + item.videoId }}
         />
         
          
@@ -87,65 +87,45 @@ const UserDares = ({route,navigation}) => {
     const mainContext = useContext(MainContext)
     const {token} = mainContext
 
-    const fetchData = (clist) =>{
-        console.log("set")
-        try {
-          fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${clist}&key=${API_KEY}`,{
-            headers:{
-              Authorization: "Bearer "+token,
-              Accept: "application/json"
-            }
-          })
-          .then(res =>  res.json())
-          .then(data => {
-              setDareList(data.items)
-              
-          })
-        } catch (error) {
-            console.log(error)
-        }
-          
-      }
-    
-      
+   
     useEffect(() =>{
         dareRef.get()
         .then(querySnapshot => {
             let dlist=[]
-            let list = '';
+   
             querySnapshot.forEach(doc => {
-                const {participants,created_by,title,end_date,start_date,videoId} = doc.data()
+                const {participants,created_by,title,end_date,start_date,videoId,likes} = doc.data()
                 if(created_by === user_id){
                     dlist.push({
                         title:title,
                         tag:'creator',
                         created_on:start_date?start_date:'',
-                        videoId:videoId
+                        videoId:videoId,
+                        likes:likes
 
                     })
-                    list+=(videoId+",")
                 }
+                
                 if(participants && participants.length > 0){
                     participants.forEach(p =>{
                         
                         if(p.participant_id === user_id){
-                            list+=(p.videoId+",")
+      
                                dlist.push({
                                 title:title,
                                 tag:'participant',
                                 created_on:start_date?start_date:'',
-                                videoId:p.videoId
+                                videoId:p.videoId,
+                                likes:p.likes
                                }) 
                         }
                     })
                 }
             });
 
-            // setDareList(dlist);
-            let clist = list.slice(0,-1)+'';
-            console.log(clist)
-            
-            if(clist) fetchData(clist)
+             setDareList(dlist);
+
+    
             
           });
 
@@ -158,7 +138,7 @@ const UserDares = ({route,navigation}) => {
                 numColumns={2}
                 data={dareList}
                 renderItem={({item,index}) => <ChallengeItem item={item}   />}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.videoId}
                 />
 
          

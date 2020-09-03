@@ -5,7 +5,7 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  Dimensions, Image
+  Dimensions, Image,Share
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {Icon} from 'react-native-elements'
@@ -18,11 +18,13 @@ import MainContext from '../../MainContext/MainContext';
 import ChallengeHeader from './ChallengeHeader';
 import { setChallenge } from '../../actions/ChallengeActions';
 import { connect } from 'react-redux';
+//import Share from "react-native-share";
 
 
-
-function ChallengeItem({ item, navigation }) {
-  
+function ChallengeItem({ item, navigation,onShare,likeChallenge,user_id }) {
+  let likes = item.likes ? item.likes.length : ''
+  let isUserLiked = item.likes ? item.likes.includes(user_id) : false
+ 
   return (
     <View
     style={styles.challengeItem}    
@@ -39,17 +41,30 @@ function ChallengeItem({ item, navigation }) {
     >
         <WebView 
         javaScriptEnabled={true}
-        source={{ uri: "https://www.youtube.com/embed/" + item.id }}
+        source={{ uri: "https://www.youtube.com/embed/" + item.videoId }}
       />
       
        
         <View style={{padding:5,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderBottomLeftRadius:20}}>
             <View style={{flexDirection:'row'}}>
-            <TouchableOpacity  delayPressIn={1} style={styles.share}>
+            <TouchableOpacity  delayPressIn={1} style={styles.share} onPress={() => {
+              let mes = `New Dare ! ${item.title} | Click to Watch https://www.youtube.com/watch?v=${item.videoId}`
+              onShare(mes)
+              }}>
                 <Icon type="entypo" name="share" size={28} color="black" />
                 </TouchableOpacity>
-                <TouchableOpacity  delayPressIn={1}>
-                <Icon type="antdesign" name="heart" size={28} color="#cecece" />
+
+                <TouchableOpacity  
+                delayPressIn={1} 
+                style={{flexDirection:'row',alignItems:'center'}}
+                onPress={() => likeChallenge(item.videoId)}>
+                
+                {
+                  isUserLiked?
+                  <Icon type="antdesign" name="heart" size={28} color="red" />:
+                  <Icon type="antdesign" name="heart" size={28} color="#cecece" />
+                }
+                <Text style={{fontSize:18,paddingLeft:5}}>{likes ? likes : '0'}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -57,7 +72,7 @@ function ChallengeItem({ item, navigation }) {
             <TouchableOpacity
                 style={styles.accept}
                 delayPressIn={0.5}
-                onPress={() => navigation.navigate("Accept Challenge",{challengeID:item.id})}
+                onPress={() => navigation.navigate("Accept Challenge",{challengeID:item.videoId})}
             >
  
                 <Text style={{backgroundColor:'white',color:'black'}}>Accept</Text>
@@ -77,47 +92,84 @@ function ChallengeItem({ item, navigation }) {
 
 const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChallengeData }) => {
     const mainContext = useContext(MainContext)
-    const {token} = mainContext
+    const {token,user_id} = mainContext
     const ref = firestore().collection('dares');
     console.log(filtered.length === 0)
 
-    const fetchData = (clist) =>{
-      console.log("set")
+  //Share Function Call
+    const onShare = async (message) => {
       try {
-        fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${clist}&key=${API_KEY}`,{
-          headers:{
-            Authorization: "Bearer "+token,
-            Accept: "application/json"
+        const result = await Share.share({
+          message:
+            message,
+        });
+        if (result.action === Share.sharedAction) {
+          if (result.activityType) {
+            // shared with activity type of result.activityType
+          } else {
+            // shared
           }
-        })
-        .then(res =>  res.json())
-        .then(data => {
-            setChallengeData(data.items)
-            console.log(data.items.length)
-        })
+        } else if (result.action === Share.dismissedAction) {
+          // dismissed
+        }
       } catch (error) {
-          console.log(error)
+        alert(error.message);
       }
+    };
+
+    //Like the challenege
+    const likeChallenge = async (vidId) =>{
+      try {
+        ref.get()
+      .then(async (querySnap) =>{
+        let current_id = ''
+        let dareLikes = []
+        querySnap.forEach(doc =>{
+            const {videoId,likes} = doc.data()
+            if(videoId === vidId){
+                current_id = doc.id
+                if(likes){
+                  if(likes.includes(user_id)){
+                        dareLikes = likes.filter(l => l != user_id)
+                  }else{
+                      dareLikes = likes;
+                      dareLikes.push(user_id)
+                  }
+              }else{
+                  dareLikes = [user_id]
+              }
+            }
+            
+
+        })
         
+        await ref.doc(current_id).update({
+              "likes":dareLikes
+          })
+      }
+      )
+      } catch (error) {
+        console.log(error)
+      }
     }
-    
   
     
+  
+    //Get Videos List from Firebase
     useEffect(() => {
       const unsubricbeListener = ref.onSnapshot(querySnapshot => {
-        let list = '';
+        let list = [];
         querySnapshot.forEach(doc => {
           
-          const { videoId,isBlocked } = doc.data();
+          const {isBlocked } = doc.data();
               if(isBlocked === false){
-                list+=(videoId+",")
+                list.push(doc.data())
               }
+         
+          
         });
 
-        let clist = list.slice(0,-1)+'';
-        console.log(clist)
-        fetchData(clist)
-        
+        setChallengeData(list)
       },[]);
       
       return () => unsubricbeListener()
@@ -133,9 +185,15 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
         numColumns={2}
         data={filtered != '' ? filtered : challenges}
         renderItem={({ item }) => (
-          <ChallengeItem item={item} navigation={navigation} />
+          <ChallengeItem 
+          item={item} 
+          navigation={navigation} 
+          onShare={onShare} 
+          likeChallenge={likeChallenge}
+          user_id={user_id}
+          />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.videoId}
       />
 
       <View style={styles.createView}>

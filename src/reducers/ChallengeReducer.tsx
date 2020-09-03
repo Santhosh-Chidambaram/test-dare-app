@@ -17,9 +17,9 @@ const ChallengeReducer = (state=initialState,action) =>{
                 ...state,
                 filtered:state.challenges.filter(function(obj){
                     return(
-                        obj.snippet.localized.title.includes(action.payload.toLowerCase())||
-                        obj.snippet.localized.title.includes(action.payload.toUpperCase()) ||
-                        (obj.snippet.localized.title).toLowerCase().includes(action.payload.toLowerCase())
+                        obj.title.includes(action.payload.toLowerCase())||
+                        obj.title.includes(action.payload.toUpperCase()) ||
+                        ((obj.title).toLowerCase()).includes(action.payload.toLowerCase())
                     );
                 })
             };
