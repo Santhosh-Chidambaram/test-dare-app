@@ -13,9 +13,9 @@ export async function _saveData(key,data) {
 
 export async function _getData(key) {
     try {
-        var value = AsyncStorage.getItem(key);
+        var value = await AsyncStorage.getItem(key);
         value = value;
-        console.log("value returned from storage");
+        console.log("value returned from storage",value);
         return value;
         
     } catch (error) {

@@ -14,26 +14,17 @@ import firestore from '@react-native-firebase/firestore';
 import { API_KEY } from "../../constants";
 import MainContext from "../../MainContext/MainContext";
 import Leaderboard from './Leaderboard'
-
+import moment from 'moment'
 
 function ParticipationItem({ item,likeChallenge,user_id,onShare }) {
   let likes = item.likes ? item.likes.length : ''
   let isUserLiked = item.likes ? item.likes.includes(user_id) : false
- 
+  let curData = item.start_date ? (item.start_date.split('/')).join("") :'09102020'
   return (
     <View style={styles.participationItem}>
-      <LinearGradient 
-    colors={["#89f7fe", "#66a6ff"]} 
     
-    style={{
-        position:'absolute',
-        top:0,
-        left:0,
-        right:0,
-        bottom:0
-    }}
-    >
-        <WebView
+       <View style={{width:'50%',height:'100%'}}> 
+       <WebView
         style={{
           width: 186,
          
@@ -67,9 +58,13 @@ function ParticipationItem({ item,likeChallenge,user_id,onShare }) {
   
 
         </View>
+       </View>
+       <View style={{width:'100%',paddingLeft:10}}>
+            <Text style={styles.challText}>{item.title}</Text>
+              <Text>{moment(curData, "MMDDYYYY").fromNow()}</Text>
+       </View>
         
-      
-    </LinearGradient>
+    
     </View>
   );
 }
@@ -121,7 +116,7 @@ const Participation = ({ navigation,route }) => {
             }  
           }
         })
-         //console.log(dlist)
+        dlist = dlist.sort(function(a,b) {return  new Date(b.start_date) - new Date(a.start_date)})
          setVlist(dlist)
     })
     
@@ -183,7 +178,6 @@ const Participation = ({ navigation,route }) => {
      {
        vlist.length > 0?
        <FlatList
-       numColumns={2}
        data={vlist}
        renderItem={({ item }) => 
        <ParticipationItem item={item}  
@@ -234,21 +228,18 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   challText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize:18,
+    
   },
   participationItem: {
-  
-    flexDirection: "column",
+    flex: 1,
+    flexDirection: "row",
     marginVertical:5,
     marginHorizontal: 5,
-    width: Dimensions.get('window').width/2.1,
     height: 180,
-    backgroundColor: "#cecece",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 15,
+    backgroundColor: "#fff",
+    elevation:5,
+    borderRadius:4,
   },
   share: {
     paddingRight:5

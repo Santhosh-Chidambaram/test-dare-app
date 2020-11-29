@@ -10,8 +10,7 @@ import {
 import { WebView } from "react-native-webview";
 import {Icon} from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
-import { API_KEY } from '../../constants';
-
+import moment from 'moment'
 import '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import MainContext from '../../MainContext/MainContext';
@@ -24,22 +23,15 @@ import { connect } from 'react-redux';
 function ChallengeItem({ item, navigation,onShare,likeChallenge,user_id }) {
   let likes = item.likes ? item.likes.length : ''
   let isUserLiked = item.likes ? item.likes.includes(user_id) : false
- 
+  let curData = item.start_date ? (item.start_date.split('/')).join("") :'09102020'
+
   return (
     <View
     style={styles.challengeItem}    
   >
-    <LinearGradient 
-    colors={["#89f7fe", "#66a6ff"]} 
-    style={{
-        position:'absolute',
-        top:0,
-        left:0,
-        right:0,
-        bottom:0
-    }}
-    >
-        <WebView 
+  
+    <View style={{width:'50%',height:'100%'}}>
+      <WebView 
         javaScriptEnabled={true}
         source={{ uri: "https://www.youtube.com/embed/" + item.videoId }}
       />
@@ -54,7 +46,11 @@ function ChallengeItem({ item, navigation,onShare,likeChallenge,user_id }) {
                 <Icon type="entypo" name="share" size={28} color="black" />
                 </TouchableOpacity>
 
-                <TouchableOpacity  
+              
+            </View>
+              
+            <View>
+            <TouchableOpacity  
                 delayPressIn={1} 
                 style={{flexDirection:'row',alignItems:'center'}}
                 onPress={() => likeChallenge(item.videoId)}>
@@ -66,27 +62,27 @@ function ChallengeItem({ item, navigation,onShare,likeChallenge,user_id }) {
                 }
                 <Text style={{fontSize:18,paddingLeft:5}}>{likes ? likes : '0'}</Text>
                 </TouchableOpacity>
-            </View>
-
-            <View>
-            <TouchableOpacity
-                style={styles.accept}
-                delayPressIn={0.5}
-                onPress={() => navigation.navigate("Accept Challenge",{challengeID:item.videoId})}
-            >
- 
-                <Text style={{backgroundColor:'white',color:'black'}}>Accept</Text>
-         
-                
-                </TouchableOpacity>
 
             </View>
 
         </View>
-        
-      
-    </LinearGradient>
+      </View>
+      <View style={{width:'50%',paddingLeft:10,paddingVertical:20}}>
+              <Text style={styles.challText}>{item.title}</Text>
+              <Text>{moment(curData, "MMDDYYYY").fromNow()}</Text>
+              <TouchableOpacity
+                style={styles.accept}
+                delayPressIn={0.5}
+                onPress={() => navigation.navigate("Accept Challenge",{challengeID:item.videoId})}
+              >
+ 
+                <Text style={{color:'white'}}>Accept</Text>
+         
+                
+                </TouchableOpacity>
+      </View>
     </View>
+
   );
 }
 
@@ -168,7 +164,7 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
          
           
         });
-
+        list = list.sort(function(a,b) {return  new Date(b.start_date) - new Date(a.start_date)})
         setChallengeData(list)
       },[]);
       
@@ -182,7 +178,6 @@ const ChallengeHistory = ({ navigation,screenProps,challenges,filtered,setChalle
     <View style={styles.container}>
      
       <FlatList
-        numColumns={2}
         data={filtered != '' ? filtered : challenges}
         renderItem={({ item }) => (
           <ChallengeItem 
@@ -240,36 +235,38 @@ export default connect(mapStateToProps,mapDispatchToProps)(ChallengeHistory);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#f6f6f6",
     paddingTop:10,
-    alignItems:'center'
   },
   challHead: {},
   challText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
-    textAlign: "center",
+
   },
 
   challengeItem: {
-   
-    flexDirection: "column",
+    flex: 1,
+    flexDirection: "row",
     marginVertical:5,
     marginHorizontal: 5,
-    width: Dimensions.get('window').width/2.1,
     height: 180,
-    backgroundColor: "#cecece",
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomLeftRadius:20
+    backgroundColor: "#fff",
+    elevation:5,
+    borderRadius:4,
+    
   },
   share: {
     paddingRight:5
   },
   accept: {
-    backgroundColor:'white',
+    backgroundColor:'#66a6ff',
     padding:5,
-    borderRadius:10
+    borderRadius:20,
+    justifyContent:'center',
+    alignItems:'center',
+    marginHorizontal:20,
+    marginTop:10
   },
   createView: {
     margin: 10,

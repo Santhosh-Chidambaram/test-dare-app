@@ -8,20 +8,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:574168900168:android:3288b3243bead9a179ee7d",
+        "mobilesdk_app_id": "1:574168900168:android:fc86abd5aa71db6979ee7d",
         "android_client_info": {
           "package_name": "com.dareu_app"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "574168900168-e5is39ujbec8g0kj5k5autf5ss8fg8bb.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.dareu_app",
-            "certificate_hash": "70e101ebe35037c9412a87ab456a0150cc8f0656"
-          }
-        },
         {
           "client_id": "574168900168-rmib931altviqe7nv9625bm7roagkhk9.apps.googleusercontent.com",
           "client_type": 3

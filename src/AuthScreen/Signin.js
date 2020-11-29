@@ -26,12 +26,13 @@ const Signin = (props) => {
             let value = await _getData('userDetails')
         
         if(value != null ){
-                autoGoogleSignIn()
+            autoGoogleSignIn()
       
         }
         } catch (error) {
-            
+            console.log("getUserdata Error")
         }
+       
       }
 
 
@@ -53,7 +54,7 @@ const Signin = (props) => {
             getUserData()
             
         } catch (error) {
-            console.log(error)
+            console.log("useEffect Sigin error",error)
             
         }
        
@@ -72,7 +73,9 @@ const Signin = (props) => {
                  const googleCredential = auth.GoogleAuthProvider.credential(sign['idToken']);
                
                   //Sign-in the user with the credential
-                 const result = await auth().signInWithCredential(googleCredential)                
+                 const result = await auth().signInWithCredential(googleCredential) 
+                 
+                 console.log(result)
                  const {user} = result;
                  let userState = {
                      username :user.displayName,
@@ -83,6 +86,8 @@ const Signin = (props) => {
                  } 
                  setUserDetails(userState)
                  _saveData('userDetails',JSON.stringify(userState)) 
+
+                 console.log(userState)
                  try {
                      const isBlocked = (await userRef.doc(user.uid).get()).data().isBlocked;
                      if(isBlocked){ 
@@ -109,7 +114,7 @@ const Signin = (props) => {
                 
              })
              .catch(error => {
-                 console.log(error.code);
+                 console.log("Error COde",error.code);
              });
             
          })

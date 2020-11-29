@@ -120,15 +120,14 @@ const UploadDare = ({ route,navigation }) => {
     const file_blob = await file.blob();
     console.log(file_blob)
     setShowProgress(true)
-    let tagarr = ["DareU"]
-    tagarr.push("DareU"+tag)
+   
 
     try {
        var metadata = {
            snippet: {
              title: "DareU"+title,
              description: "Company Name -"+selectedCompany+""+description,
-             categoryId: 22,
+             categoryId: 24,
            },
            status: {
              privacyStatus:"public",
